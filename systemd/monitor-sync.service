@@ -1,0 +1,10 @@
+[Unit]
+Description=Sincroniza a stack de monitoramento com o GitHub
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/monitor
+ExecStart=/usr/bin/env bash /opt/monitor/scripts/sincronizar.sh
+TimeoutStartSec=1800

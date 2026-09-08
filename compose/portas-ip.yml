@@ -1,0 +1,10 @@
+# Usado SO no modo IP (DOMINIO vazio no .env).
+# O Caddy passa a escutar tambem nas portas de cada servico, porque sem
+# dominio nao da para separar por subdominio.
+services:
+  caddy:
+    ports:
+      - "3000:3000"   # Grafana
+      - "8080:8080"   # Zabbix
+      - "3001:3001"   # Uptime Kuma
+      - "9000:9000"   # Portainer

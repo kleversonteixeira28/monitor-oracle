@@ -1,0 +1,7 @@
+# Script com CRLF quebra no Linux ("bad interpreter"). O servidor le tudo isto.
+* text=auto eol=lf
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+Caddyfile* text eol=lf
+*.bat  text eol=crlf

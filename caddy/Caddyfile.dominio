@@ -1,0 +1,44 @@
+# MODO DOMINIO - HTTPS automatico (Let's Encrypt).
+# Gerado em caddy/Caddyfile pelo sincronizar.sh quando DOMINIO esta preenchido.
+{
+	email {$EMAIL_TLS}
+}
+
+(comum) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+}
+
+grafana.{$DOMINIO} {
+	import comum
+	reverse_proxy grafana:3000
+}
+
+zabbix.{$DOMINIO} {
+	import comum
+	reverse_proxy zabbix-web:8080
+}
+
+status.{$DOMINIO} {
+	import comum
+	reverse_proxy uptime-kuma:3001
+}
+
+docker.{$DOMINIO} {
+	import comum
+	reverse_proxy portainer:9000
+}
+
+{$DOMINIO} {
+	redir https://grafana.{$DOMINIO}{uri}
+}
+
+# Prometheus NAO e publicado de proposito: ele nao tem login nenhum.
+# O Grafana fala com ele por dentro da rede. Para abrir na sua maquina:
+#   ssh -L 9090:localhost:9090 ubuntu@SEU-IP   (e rode: docker compose ...)
+# ou use o tunel pronto: scripts/tunel-prometheus.sh

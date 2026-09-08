@@ -1,0 +1,222 @@
+# Stack de monitoramento - Oracle Cloud Always Free (Ampere A1, arm64)
+#
+# REGRA DE OURO DESTE ARQUIVO: nenhum servico publica porta para o mundo.
+# Todos ficam so na rede interna e o Caddy e a unica porta de entrada.
+# Motivo: quando um container publica porta, o Docker escreve regra de DNAT
+# que passa POR BAIXO do ufw - o "ufw deny" nao bloqueia nada. Com um unico
+# ponto de entrada, o que o ufw diz e o que realmente acontece.
+
+name: monitor
+
+x-log: &log
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+
+  # ---------------------------------------------------------------- entrada
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    <<: *log
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMINIO: ${DOMINIO}
+      EMAIL_TLS: ${EMAIL_TLS}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_dados:/data
+      - caddy_config:/config
+    networks: [monitor]
+
+  # ------------------------------------------------------------------ zabbix
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    <<: *log
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      TZ: ${TZ}
+    volumes:
+      - postgres_dados:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [monitor]
+
+  zabbix-server:
+    image: zabbix/zabbix-server-pgsql:alpine-7.0-latest
+    container_name: zabbix-server
+    restart: unless-stopped
+    <<: *log
+    environment:
+      DB_SERVER_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      ZBX_CACHESIZE: 256M
+      ZBX_HISTORYCACHESIZE: 128M
+      ZBX_STARTPOLLERS: "10"
+      TZ: ${TZ}
+    depends_on:
+      postgres: { condition: service_healthy }
+    ports:
+      # 10051 fica so no localhost do servidor. Agente de outra maquina entra
+      # por VPN/tunel, ou voce libera a porta de proposito no ufw e na Oracle.
+      - "127.0.0.1:10051:10051"
+    networks: [monitor]
+
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-pgsql:alpine-7.0-latest
+    container_name: zabbix-web
+    restart: unless-stopped
+    <<: *log
+    environment:
+      ZBX_SERVER_HOST: zabbix-server
+      DB_SERVER_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PHP_TZ: ${TZ}
+      TZ: ${TZ}
+    depends_on: [zabbix-server]
+    networks: [monitor]
+
+  zabbix-agent:
+    image: zabbix/zabbix-agent2:alpine-7.0-latest
+    container_name: zabbix-agent
+    restart: unless-stopped
+    <<: *log
+    # Precisa enxergar o host de verdade, senao mede a si mesmo.
+    privileged: true
+    pid: host
+    environment:
+      # Tem que bater com o nome do host cadastrado no Zabbix, senao fica cinza.
+      ZBX_HOSTNAME: "Zabbix server"
+      ZBX_SERVER_HOST: zabbix-server
+      TZ: ${TZ}
+    volumes:
+      - /:/hostfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [monitor]
+
+  # -------------------------------------------------------------- prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    <<: *log
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENCAO}
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_dados:/prometheus
+    ports:
+      # So no localhost do servidor: nao aparece na internet, mas da para
+      # alcancar por tunel SSH (scripts/tunel-prometheus.sh).
+      - "127.0.0.1:9090:9090"
+    networks: [monitor]
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    <<: *log
+    command:
+      - --path.rootfs=/host
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|var/lib/docker)($$|/)
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    networks: [monitor]
+
+  cadvisor:
+    # Fixo na versao: a tag "latest" do cAdvisor ja veio sem arm64 no passado.
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    restart: unless-stopped
+    <<: *log
+    privileged: true
+    devices: ["/dev/kmsg:/dev/kmsg"]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks: [monitor]
+
+  # ----------------------------------------------------------------- grafana
+  grafana:
+    image: grafana/grafana-oss:11
+    container_name: grafana
+    restart: unless-stopped
+    <<: *log
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_SENHA}
+      GF_INSTALL_PLUGINS: alexanderzobnin-zabbix-app
+      GF_SERVER_ROOT_URL: ${GRAFANA_URL}
+      GF_USERS_DEFAULT_THEME: dark
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      # Lido pelo provisionamento do datasource do Zabbix.
+      ZABBIX_ADMIN_SENHA: ${ZABBIX_ADMIN_SENHA}
+      TZ: ${TZ}
+    volumes:
+      - grafana_dados:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on: [prometheus]
+    networks: [monitor]
+
+  # ------------------------------------------------------------ disponibil.
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    restart: unless-stopped
+    <<: *log
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - kuma_dados:/app/data
+    networks: [monitor]
+
+  # -------------------------------------------------------------- portainer
+  portainer:
+    image: portainer/portainer-ce:lts
+    container_name: portainer
+    restart: unless-stopped
+    <<: *log
+    # Sem isto o Portainer TRAVA a conta se ninguem abrir em 5 min.
+    command: --admin-password-file /run/portainer_senha
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_dados:/data
+      - ./dados/portainer_senha:/run/portainer_senha:ro
+    networks: [monitor]
+
+networks:
+  monitor:
+    name: monitor
+
+volumes:
+  caddy_dados:
+  caddy_config:
+  postgres_dados:
+  prometheus_dados:
+  grafana_dados:
+  kuma_dados:
+  portainer_dados:

@@ -1,0 +1,9 @@
+[Unit]
+Description=Backup do Zabbix, Grafana, Kuma e Portainer
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/monitor
+ExecStart=/usr/bin/env bash /opt/monitor/scripts/backup.sh
+TimeoutStartSec=3600

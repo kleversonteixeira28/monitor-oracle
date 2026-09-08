@@ -1,0 +1,7 @@
+# Segredos e estado do servidor: nunca vao para o GitHub.
+.env
+dados/
+backups/
+# Gerado pelo instalador a partir de caddy/Caddyfile.dominio ou .ip
+caddy/Caddyfile
+servidor.txt

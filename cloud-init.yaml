@@ -1,0 +1,33 @@
+#cloud-config
+# ==========================================================================
+#  COLE ISTO no campo "Cloud-init script" ao criar a instancia na Oracle
+#  (Create instance -> Show advanced options -> Management -> Paste script).
+#
+#  TROQUE a linha REPO abaixo pelo endereco do SEU repositorio.
+#  Nao coloque senha nenhuma aqui: o cloud-init fica legivel no painel.
+# ==========================================================================
+
+package_update: true
+package_upgrade: false
+packages:
+  - git
+  - curl
+  - ca-certificates
+
+write_files:
+  - path: /etc/monitor.conf
+    permissions: "0644"
+    content: |
+      REPO=https://github.com/SEU-USUARIO/monitor-oracle.git
+      RAMO=main
+
+runcmd:
+  - |
+    set -eux
+    . /etc/monitor.conf
+    if [ ! -d /opt/monitor/.git ]; then
+      git clone --branch "$RAMO" "$REPO" /opt/monitor
+    fi
+    bash /opt/monitor/instalar.sh 2>&1 | tee /var/log/monitor-instalacao.log
+
+final_message: "Servidor pronto em $UPTIME s. Veja /var/log/monitor-instalacao.log"

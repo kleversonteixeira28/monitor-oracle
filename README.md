@@ -1,0 +1,244 @@
+# Monitoramento na Oracle Cloud (gratis)
+
+Servidor Ubuntu na camada **Always Free** da Oracle rodando Zabbix, Grafana,
+Prometheus, Uptime Kuma e Portainer em Docker.
+
+A ideia central: **o servidor nao guarda configuracao.** Ele clona este
+repositorio no primeiro boot, se instala sozinho, e depois puxa daqui de 5 em
+5 minutos. Voce muda um arquivo no PC, da `git push`, e o servidor vira aquilo.
+Se ele morrer, voce cria outro com o mesmo cloud-init e em ~10 minutos esta
+tudo de volta (menos o historico, que vem do backup).
+
+---
+
+## O que sobe
+
+| Servico | Para que serve |
+|---|---|
+| **Zabbix 7** | monitoramento classico: servidores, switches, impressoras, SNMP, alertas |
+| **Grafana** | os graficos, lendo do Zabbix e do Prometheus |
+| **Prometheus + node-exporter + cAdvisor** | metricas da maquina e de cada container |
+| **Uptime Kuma** | "meu site esta no ar?" — checagem externa, com alerta no Telegram |
+| **Portainer** | mexer nos containers pelo navegador |
+| **Caddy** | porta de entrada unica, com HTTPS automatico se voce tiver dominio |
+
+Cabe folgado nos 4 OCPU / 24 GB da instancia ARM gratuita: usa ~3 GB de RAM.
+
+---
+
+## Passo 1 — criar o repositorio no GitHub
+
+Nesta pasta (`C:\Users\Kleverson\MonitorOracle`):
+
+```bash
+git init -b main && git add . && git commit -m "Stack de monitoramento que se instala sozinha"
+```
+
+```bash
+gh repo create monitor-oracle --public --source=. --push
+```
+
+Sem o `gh`: crie o repositorio pelo site, depois `git remote add origin ...` e
+`git push -u origin main`.
+
+> **Publico ou privado?** Nao ha segredo nenhum aqui — as senhas nascem no
+> servidor e ficam so la. Publico e mais simples (o servidor clona sem
+> credencial). Para privado, veja "Repositorio privado" no fim.
+
+Agora edite `cloud-init.yaml` e troque `SEU-USUARIO` pelo seu usuario. Commite.
+
+## Passo 2 — a chave SSH
+
+No PowerShell, se ainda nao tiver:
+
+```bash
+ssh-keygen -t ed25519 -C "oracle-monitor"
+```
+
+O conteudo de `C:\Users\Kleverson\.ssh\id_ed25519.pub` e o que voce cola na
+Oracle no passo seguinte.
+
+## Passo 3 — criar a instancia na Oracle
+
+1. Conta em <https://www.oracle.com/br/cloud/free/> (pede cartao so para
+   validar; cobra e estorna alguns reais). **A regiao de origem escolhida no
+   cadastro nao muda depois** — escolha Sao Paulo ou Vinhedo.
+2. Menu -> **Compute -> Instances -> Create instance**
+3. Preencha:
+   - **Name:** `monitor`
+   - **Image:** Canonical **Ubuntu 24.04**
+   - **Shape:** *Change shape* -> **Ampere** -> `VM.Standard.A1.Flex`
+     -> **4 OCPUs / 24 GB** (tem que aparecer o selo *Always Free eligible*)
+   - **Networking:** cria uma VCN nova, com **Assign a public IPv4 address**
+   - **Add SSH keys:** *Paste public keys* -> cole o `id_ed25519.pub`
+   - **Boot volume:** marque *Specify a custom boot volume size* e ponha
+     **100 GB** (o padrao de 47 GB aperta quando o historico do Zabbix cresce;
+     a franquia gratuita e 200 GB no total)
+   - **Show advanced options -> Management -> Cloud-init script:**
+     cole o conteudo de `cloud-init.yaml` **ja com o seu usuario do GitHub**
+4. *Create*. Anote o **Public IP address**.
+5. Ainda na Oracle: **Networking -> Virtual Cloud Networks -> sua VCN ->
+   Subnets -> a subnet -> Default Security List -> Add Ingress Rules**, e
+   adicione (Source `0.0.0.0/0`, IP Protocol `TCP`):
+
+   | Porta | Quando |
+   |---|---|
+   | 80, 443 | sempre |
+   | 3000, 8080, 3001, 9000 | so enquanto voce estiver **sem dominio** |
+
+> Reserve o IP publico (**Reserved**, nao *Ephemeral*) se for apontar DNS para
+> ele — IP efemero muda quando a instancia para.
+
+## Passo 4 — esperar e entrar
+
+A instalacao completa leva de 8 a 15 minutos (baixa ~1,5 GB de imagens).
+
+```bash
+ssh ubuntu@SEU-IP
+```
+
+```bash
+sudo tail -f /var/log/monitor-instalacao.log
+```
+
+Quando terminar:
+
+```bash
+sudo bash /opt/monitor/scripts/senhas.sh
+```
+
+Isso imprime os enderecos e as senhas geradas. **Copie para o seu gerenciador
+de senhas** — elas nao existem em nenhum outro lugar.
+
+---
+
+## Depois: por um dominio na frente
+
+Enquanto for por IP, e HTTP puro — a senha do Grafana viaja em texto claro.
+Voce ja tem o `skfoods.com.br`. Crie 4 registros **A** apontando para o IP:
+
+```
+grafana.skfoods.com.br   status.skfoods.com.br
+zabbix.skfoods.com.br    docker.skfoods.com.br
+```
+
+Depois, **no servidor**, edite so estas duas linhas do `/opt/monitor/.env`:
+
+```
+DOMINIO=skfoods.com.br
+EMAIL_TLS=kteixeira28@hotmail.com
+```
+
+Em ate 5 minutos a sincronizacao troca o Caddyfile, o Caddy tira certificado
+sozinho e o firewall fecha as portas 3000/8080/3001/9000. Feche as mesmas
+portas na Security List da Oracle depois disso.
+
+## O dia a dia
+
+```bash
+sudo bash /opt/monitor/scripts/raio-x.sh
+```
+
+```bash
+sudo bash /opt/monitor/scripts/senhas.sh
+```
+
+```bash
+sudo bash /opt/monitor/scripts/sincronizar.sh
+```
+
+```bash
+sudo bash /opt/monitor/scripts/atualizar.sh
+```
+
+`raio-x` = estado de tudo em uma tela. `senhas` = enderecos e acessos.
+`sincronizar` = puxar do GitHub agora, sem esperar os 5 min.
+`atualizar` = baixar versoes novas das imagens (faz backup antes).
+
+Para ver por que um container caiu:
+
+```bash
+docker logs --tail 50 zabbix-server
+```
+
+Mudar a stack: edite aqui no PC, `git push`, espere 5 minutos.
+
+---
+
+## Armadilhas que custam tempo
+
+**"Out of host capacity" ao criar a instancia ARM.**
+E o problema numero um do free tier, e nao e erro seu: nao ha maquina Ampere
+livre naquele momento. O que funciona, em ordem:
+
+1. tentar outro **Availability Domain** na mesma regiao;
+2. tentar em horarios diferentes por alguns dias (madrugada costuma abrir);
+3. mudar a conta para **Pay As You Go**. Os recursos Always Free continuam
+   gratuitos, mas a fila de capacidade passa a ser prioritaria. E o que mais
+   resolve — so tome cuidado para nao criar recurso pago sem querer.
+
+**Nao adianta cair para a instancia AMD gratuita.**
+A `VM.Standard.E2.1.Micro` tem 1 GB de RAM. So o Zabbix com Postgres ja passa
+disso. Se for ARM ou nada, e ARM.
+
+**Sao dois firewalls, nao um.**
+A Security List da VCN (painel da Oracle) e o `ufw` (dentro da maquina). Porta
+liberada em um e fechada no outro = nao responde, e sem mensagem de erro. O
+`raio-x.sh` mostra o lado de dentro; o de fora so o painel mostra.
+
+**A imagem Ubuntu da Oracle vem com regras de iptables proprias** que descartam
+quase tudo na entrada. O `instalar.sh` remove essas regras e passa o comando
+para o `ufw`, para existir um lugar so onde olhar. Se voce reinstalar o
+`iptables-persistent` depois, volta a confusao.
+
+**Container que publica porta passa por baixo do ufw.**
+O Docker escreve regra de NAT antes da cadeia que o `ufw` controla — um
+`ufw deny` nao bloqueia porta publicada de container. Por isso, aqui, nenhum
+servico publica porta para fora: so o Caddy. Se voce acrescentar um servico,
+mantenha essa regra ou vai abrir buraco sem perceber.
+
+**A Oracle recupera instancia Always Free ociosa.**
+Se a maquina ficar dias com CPU, rede e memoria muito baixas, ela pode ser
+recuperada. Esta stack sozinha ja gera atividade suficiente; so nao deixe tudo
+parado por semanas.
+
+**Backup local nao e backup.**
+O `backup.sh` grava em `/opt/monitor/backups`, no proprio disco. Se a instancia
+sumir, some junto. Leve para fora de vez em quando:
+
+```bash
+scp -r ubuntu@SEU-IP:/opt/monitor/backups .
+```
+
+---
+
+## Ideias de uso imediato
+
+- **Uptime Kuma:** monitor HTTP em `https://skfoods.com.br` e nas lojas.
+  Alerta por Telegram sai em 2 minutos de configuracao.
+- **Zabbix:** agente nas maquinas das lojas. O servidor escuta em 10051, hoje
+  so no localhost — libere via VPN, nunca direto na internet.
+- **Grafana:** o painel "Servidor Oracle" ja vem provisionado. Para um painel
+  completo de Linux, importe o dashboard **1860** (Node Exporter Full).
+
+## Repositorio privado
+
+O servidor precisa de credencial para clonar. O caminho limpo e uma
+**deploy key**: gere uma chave no servidor, cadastre a publica em
+*Settings -> Deploy keys* do repositorio (somente leitura) e troque o `REPO` do
+`/etc/monitor.conf` para a forma SSH (`git@github.com:usuario/repo.git`). Como
+isso exige um passo manual depois do boot, comece publico e mude se quiser.
+
+## Estrutura
+
+```
+cloud-init.yaml     colado no painel da Oracle; clona e chama o instalar.sh
+instalar.sh         primeiro boot: pacotes, swap, firewall, docker, timers
+docker-compose.yml  a stack (ninguem publica porta para fora, so o Caddy)
+compose/            portas extras usadas so no modo sem dominio
+caddy/              dois modelos de Caddyfile; o instalador escolhe um
+scripts/            sincronizar, gerar-env, firewall, zabbix, raio-x, backup
+systemd/            timers de sincronizacao (5 min) e backup (03:20)
+grafana/            datasources, plugin do Zabbix e o painel inicial
+prometheus/         o que raspar
+```
