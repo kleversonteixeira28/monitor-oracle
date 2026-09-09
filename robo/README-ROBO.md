@@ -30,7 +30,8 @@ O robô cria uma instância **de verdade**, com o `cloud-init.yaml` deste
 repositório. Então, antes de ligar:
 
 1. O repositório precisa estar no GitHub (`git push` feito)
-2. O `cloud-init.yaml` precisa estar com o seu usuário no lugar de `SEU-USUARIO`
+2. O `cloud-init.yaml` precisa apontar para o repositório certo — ele já vem
+   com `kleversonteixeira28/monitor-oracle` na linha `REPO=`
 
 Se a instância nascer com o cloud-init errado, ela sobe pelada e você perde a
 vaga que esperou horas para conseguir. O robô do PC checa isso e se recusa a
@@ -44,9 +45,9 @@ No painel da Oracle, clique no ícone de terminal (**Cloud Shell**), no canto
 superior direito. Espere ele abrir e cole:
 
 ```bash
-export CLOUD_INIT_URL="https://raw.githubusercontent.com/SEU-USUARIO/monitor-oracle/main/cloud-init.yaml"
+export CLOUD_INIT_URL="https://raw.githubusercontent.com/kleversonteixeira28/monitor-oracle/main/cloud-init.yaml"
 export CHAVE_SSH="ssh-ed25519 AAAA...cole aqui a sua chave publica..."
-curl -fsSL "https://raw.githubusercontent.com/SEU-USUARIO/monitor-oracle/main/robo/robo-cloudshell.sh" | bash
+curl -fsSL "https://raw.githubusercontent.com/kleversonteixeira28/monitor-oracle/main/robo/robo-cloudshell.sh" | bash
 ```
 
 A `CHAVE_SSH` é o conteúdo do seu `id_ed25519.pub` — sem ela você não entra na

@@ -45,7 +45,8 @@ Sem o `gh`: crie o repositorio pelo site, depois `git remote add origin ...` e
 > servidor e ficam so la. Publico e mais simples (o servidor clona sem
 > credencial). Para privado, veja "Repositorio privado" no fim.
 
-Agora edite `cloud-init.yaml` e troque `SEU-USUARIO` pelo seu usuario. Commite.
+O `cloud-init.yaml` ja aponta para `kleversonteixeira28/monitor-oracle`. Se voce
+usar outra conta ou outro nome de repositorio, ajuste a linha `REPO=` la dentro.
 
 ## Passo 2 — a chave SSH
 

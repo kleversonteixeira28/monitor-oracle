@@ -18,7 +18,7 @@ write_files:
   - path: /etc/monitor.conf
     permissions: "0644"
     content: |
-      REPO=https://github.com/SEU-USUARIO/monitor-oracle.git
+      REPO=https://github.com/kleversonteixeira28/monitor-oracle.git
       RAMO=main
 
 runcmd:
