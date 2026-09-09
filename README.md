@@ -149,6 +149,51 @@ Em ate 5 minutos a sincronizacao troca o Caddyfile, o Caddy tira certificado
 sozinho e o firewall fecha as portas 3000/8080/3001/9000. Feche as mesmas
 portas na Security List da Oracle depois disso.
 
+## Testar na sua propria maquina (sem nuvem nenhuma)
+
+A camada gratuita da Oracle vive sem capacidade ARM, e isso pode travar por
+dias. Para **testar** — ver o Zabbix e o Grafana funcionando, aprender, mostrar
+para alguem — nao precisa de nuvem: a mesma stack sobe no seu PC pelo WSL.
+
+No PowerShell, uma vez:
+
+```bash
+wsl --install -d Ubuntu
+```
+
+Ele pede um usuario e senha do Linux e pode pedir para reiniciar. Depois, com
+`wsl` aberto:
+
+```bash
+curl -fsSL https://get.docker.com | sh
+```
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+Feche e reabra o WSL, ligue o systemd (crie `/etc/wsl.conf` com `[boot]` e
+`systemd=true`, depois `wsl --shutdown` no PowerShell), e entao:
+
+```bash
+git clone https://github.com/kleversonteixeira28/monitor-oracle.git ~/monitor && cd ~/monitor
+```
+
+```bash
+bash local/testar-local.sh
+```
+
+Pronto: Grafana em `http://localhost:3000`, Zabbix em `:8080`, Kuma em `:3001`,
+Portainer em `:9000`. As senhas saem na tela no fim.
+
+Para desligar sem perder nada: `bash local/testar-local.sh --parar`.
+Para zerar: `--apagar`.
+
+O que o modo local **nao** faz, de proposito: firewall, swap, fail2ban, timers
+e sincronizacao com o GitHub. Isso e endurecimento de servidor exposto na
+internet; na sua maquina so atrapalharia. E so a sua maquina alcanca — nao ha
+HTTPS nem acesso de fora.
+
 ## Abrir as portas sem clicar no painel
 
 `oracle/abrir-portas.sh` faz isso pela API. Rode no **Cloud Shell** (o terminal

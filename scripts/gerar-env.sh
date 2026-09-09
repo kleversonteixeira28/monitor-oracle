@@ -32,7 +32,9 @@ done < "$MOLDE"
 
 # GRAFANA_URL e derivada, entao e recalculada toda vez.
 set -a; . "$ENV"; set +a
-if [ -n "${DOMINIO:-}" ]; then
+if [ "${MODO_LOCAL:-0}" = "1" ]; then
+  URL="http://localhost:3000"
+elif [ -n "${DOMINIO:-}" ]; then
   URL="https://grafana.${DOMINIO}"
 else
   IP="$(curl -s --max-time 5 https://api.ipify.org || true)"

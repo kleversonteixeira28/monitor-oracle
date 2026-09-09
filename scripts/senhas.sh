@@ -4,7 +4,10 @@ set -euo pipefail
 RAIZ="${RAIZ:-/opt/monitor}"
 set -a; . "$RAIZ/.env"; set +a
 
-if [ -n "${DOMINIO:-}" ]; then
+if [ "${MODO_LOCAL:-0}" = "1" ]; then
+  G="http://localhost:3000"; Z="http://localhost:8080"
+  K="http://localhost:3001"; P="http://localhost:9000"
+elif [ -n "${DOMINIO:-}" ]; then
   G="https://grafana.$DOMINIO"; Z="https://zabbix.$DOMINIO"
   K="https://status.$DOMINIO"; P="https://docker.$DOMINIO"
 else
