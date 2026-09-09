@@ -3,9 +3,21 @@
 #  COLE ISTO no campo "Cloud-init script" ao criar a instancia na Oracle
 #  (Create instance -> Show advanced options -> Management -> Paste script).
 #
-#  TROQUE a linha REPO abaixo pelo endereco do SEU repositorio.
+#  Ja aponta para kleversonteixeira28/monitor-oracle. Se voce trocar de conta
+#  ou de nome de repositorio, ajuste a linha REPO no fim deste arquivo.
 #  Nao coloque senha nenhuma aqui: o cloud-init fica legivel no painel.
 # ==========================================================================
+
+# Chave publica do Kleverson. Chave PUBLICA pode ficar em repositorio publico
+# - e feita para ser espalhada; o GitHub publica a de todo mundo em
+# github.com/<usuario>.keys. A privada nunca sai do PC.
+#
+# Por que aqui, se a Oracle ja recebe a chave no metadata da instancia: para a
+# promessa "se o servidor morrer, crie outro com este mesmo cloud-init" ser
+# verdade. Sem isto, recriar pelo painel exige lembrar de colar a chave, e um
+# erro nessa hora so aparece quando o SSH recusa - sem conserto possivel.
+ssh_authorized_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICpUpciJinJbKaiImNT+T+Klw7i/cO4MK6TLG732nm28 oracle-monitor
 
 package_update: true
 package_upgrade: false
