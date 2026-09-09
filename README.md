@@ -62,7 +62,12 @@ Oracle no passo seguinte.
 
 1. Conta em <https://www.oracle.com/br/cloud/free/> (pede cartao so para
    validar; cobra e estorna alguns reais). **A regiao de origem escolhida no
-   cadastro nao muda depois** — escolha Sao Paulo ou Vinhedo.
+   cadastro nao muda depois** — e os recursos Always Free so existem nela.
+   Regiao usada aqui: **US West (San Jose)**. Latencia de ~170 ms do Brasil:
+   o painel fica um pouco mais lento de clicar, a coleta nao sofre.
+   O servidor mantem o relogio em America/Sao_Paulo mesmo assim (o
+   `instalar.sh` cuida disso), entao graficos e backup seguem em horario
+   de Brasilia.
 2. Menu -> **Compute -> Instances -> Create instance**
 3. Preencha:
    - **Name:** `monitor`
@@ -171,7 +176,9 @@ Mudar a stack: edite aqui no PC, `git push`, espere 5 minutos.
 E o problema numero um do free tier, e nao e erro seu: nao ha maquina Ampere
 livre naquele momento. O que funciona, em ordem:
 
-1. tentar outro **Availability Domain** na mesma regiao;
+1. tentar outro **Availability Domain**, *se* a sua regiao tiver mais de um
+   — Sao Paulo, Vinhedo e San Jose tem apenas o AD-1, entao para elas este
+   passo nao existe;
 2. tentar em horarios diferentes por alguns dias (madrugada costuma abrir);
 3. mudar a conta para **Pay As You Go**. Os recursos Always Free continuam
    gratuitos, mas a fila de capacidade passa a ser prioritaria. E o que mais
@@ -218,6 +225,13 @@ scp -r ubuntu@SEU-IP:/opt/monitor/backups .
   Alerta por Telegram sai em 2 minutos de configuracao.
 - **Zabbix:** agente nas maquinas das lojas. O servidor escuta em 10051, hoje
   so no localhost — libere via VPN, nunca direto na internet.
+
+## O que NAO por neste servidor
+
+Ele esta fora do Brasil. Metrica de monitoramento nao e dado pessoal, entao
+Zabbix, Grafana e Kuma estao de boa. Mas **backup do `prod.db` do SKFOODS nao
+vai aqui** — isso e dado de cliente saindo do pais, e vira conversa de LGPD
+sem necessidade. O backup do SKFOODS tem o caminho dele, no S3.
 - **Grafana:** o painel "Servidor Oracle" ja vem provisionado. Para um painel
   completo de Linux, importe o dashboard **1860** (Node Exporter Full).
 
