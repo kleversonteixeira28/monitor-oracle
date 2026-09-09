@@ -91,14 +91,16 @@ Oracle no passo seguinte.
    - **Show advanced options -> Management -> Cloud-init script:**
      cole o conteudo de `cloud-init.yaml` **ja com o seu usuario do GitHub**
 4. *Create*. Anote o **Public IP address**.
-5. Ainda na Oracle: **Networking -> Virtual Cloud Networks -> sua VCN ->
-   Subnets -> a subnet -> Default Security List -> Add Ingress Rules**, e
-   adicione (Source `0.0.0.0/0`, IP Protocol `TCP`):
+5. Liberar as portas na Security List. O jeito rapido e rodar
+   `oracle/abrir-portas.sh` no Cloud Shell (veja abaixo). Na mao:
+   **Networking -> Virtual Cloud Networks -> sua VCN -> Subnets -> a subnet
+   -> Default Security List -> Add Ingress Rules**, com Source `0.0.0.0/0`:
 
-   | Porta | Quando |
-   |---|---|
-   | 80, 443 | sempre |
-   | 3000, 8080, 3001, 9000 | so enquanto voce estiver **sem dominio** |
+   | Porta | Protocolo | Quando |
+   |---|---|---|
+   | 80, 443 | TCP | sempre |
+   | 443 | UDP | sempre (HTTP/3 do Caddy) |
+   | 3000, 8080, 3001, 9000 | TCP | so enquanto voce estiver **sem dominio** |
 
 > Reserve o IP publico (**Reserved**, nao *Ephemeral*) se for apontar DNS para
 > ele — IP efemero muda quando a instancia para.
@@ -146,6 +148,23 @@ EMAIL_TLS=kteixeira28@hotmail.com
 Em ate 5 minutos a sincronizacao troca o Caddyfile, o Caddy tira certificado
 sozinho e o firewall fecha as portas 3000/8080/3001/9000. Feche as mesmas
 portas na Security List da Oracle depois disso.
+
+## Abrir as portas sem clicar no painel
+
+`oracle/abrir-portas.sh` faz isso pela API. Rode no **Cloud Shell** (o terminal
+dentro do painel da Oracle), que ja vem com o `oci` pronto:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kleversonteixeira28/monitor-oracle/main/oracle/abrir-portas.sh | bash
+```
+
+Ele cria uma Security List **nova** e a anexa a sub-rede, em vez de editar a
+que ja existe. Regras somam entre listas, entao o efeito e o mesmo — mas a
+regra que libera o SSH fica intocada. Se algo desse errado editando a lista
+padrao, voce perderia o acesso a maquina sem ter como voltar.
+
+Quando puser um dominio, rode de novo com `--com-dominio` para fechar as
+portas 3000/8080/3001/9000.
 
 ## O dia a dia
 
