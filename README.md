@@ -71,6 +71,14 @@ Oracle no passo seguinte.
 2. Menu -> **Compute -> Instances -> Create instance**
 3. Preencha:
    - **Name:** `monitor`
+   - **Compartimento:** o raiz (o que tem o nome da conta)
+   - **Placement:** o unico AD que houver. Em *opcoes avancadas*:
+     **Capacidade sob demanda** (a *preemptiva* e mais barata mas a Oracle
+     mata a instancia quando quiser, e nao conta como Always Free) e
+     **dominio de falha em automatico** — fixar um so reduz o hardware onde
+     ela procura, e e justamente isso que voce nao quer
+   - **Instancia blindada / computacao confidencial:** desligado (nem
+     funciona nos shapes Ampere)
    - **Image:** Canonical **Ubuntu 24.04**
    - **Shape:** *Change shape* -> **Ampere** -> `VM.Standard.A1.Flex`
      -> **4 OCPUs / 24 GB** (tem que aparecer o selo *Always Free eligible*)
@@ -176,9 +184,10 @@ Mudar a stack: edite aqui no PC, `git push`, espere 5 minutos.
 E o problema numero um do free tier, e nao e erro seu: nao ha maquina Ampere
 livre naquele momento. O que funciona, em ordem:
 
-1. tentar outro **Availability Domain**, *se* a sua regiao tiver mais de um
-   — Sao Paulo, Vinhedo e San Jose tem apenas o AD-1, entao para elas este
-   passo nao existe;
+1. varrer os **dominios de falha** na mao. Em regiao de um AD so (Sao Paulo,
+   Vinhedo, San Jose), este e o equivalente de "tentar outro AD": volte em
+   *opcoes avancadas* e force FD-1, depois FD-2, depois FD-3, tentando criar
+   a cada troca. Se a regiao tiver mais de um AD, varra os ADs tambem;
 2. tentar em horarios diferentes por alguns dias (madrugada costuma abrir);
 3. mudar a conta para **Pay As You Go**. Os recursos Always Free continuam
    gratuitos, mas a fila de capacidade passa a ser prioritaria. E o que mais
