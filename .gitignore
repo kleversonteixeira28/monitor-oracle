@@ -5,3 +5,5 @@ backups/
 # Gerado pelo instalador a partir de caddy/Caddyfile.dominio ou .ip
 caddy/Caddyfile
 servidor.txt
+robo/robo-config.json
+robo/robo.log

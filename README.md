@@ -195,7 +195,12 @@ Depois, com a maquina de pe, voce cresce sem recriar: *instancia -> Editar ->
 Shape configuration -> 4 OCPUs*, e reinicia. Isso tambem depende de capacidade
 na hora, mas voce ja esta dentro, com IP e disco prontos.
 
-Se nem 1 OCPU passar, na ordem:
+Se nem 1 OCPU passar, **use o robo**: `robo/` tem um script que fica pedindo a
+instancia pela API, alternando tamanho e dominio de falha, e para sozinho
+quando conseguir. Capacidade libera o tempo todo — so nunca na hora em que
+voce esta olhando a tela. Veja `robo/README-ROBO.md`.
+
+Em paralelo, na ordem:
 
 1. varrer os **dominios de falha** na mao. Em regiao de um AD so (Sao Paulo,
    Vinhedo, San Jose), este e o equivalente de "tentar outro AD": volte em
