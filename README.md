@@ -182,13 +182,27 @@ Mudar a stack: edite aqui no PC, `git push`, espere 5 minutos.
 
 **"Out of host capacity" ao criar a instancia ARM.**
 E o problema numero um do free tier, e nao e erro seu: nao ha maquina Ampere
-livre naquele momento. O que funciona, em ordem:
+livre naquele momento.
+
+O que mais resolve: **pedir menos**. Pedir 4 OCPU / 24 GB e pedir a franquia
+inteira num bloco so, e a Oracle precisa achar um host com tudo isso livre de
+uma vez. Peca **1 OCPU / 6 GB** — cabe em capacidade fragmentada, que e o que
+sobra num datacenter cheio. E 6 GB rodam esta stack com folga (ela usa ~3 GB);
+1 OCPU aguenta bem enquanto forem poucos hosts monitorados. Nada no repositorio
+muda por causa disso.
+
+Depois, com a maquina de pe, voce cresce sem recriar: *instancia -> Editar ->
+Shape configuration -> 4 OCPUs*, e reinicia. Isso tambem depende de capacidade
+na hora, mas voce ja esta dentro, com IP e disco prontos.
+
+Se nem 1 OCPU passar, na ordem:
 
 1. varrer os **dominios de falha** na mao. Em regiao de um AD so (Sao Paulo,
    Vinhedo, San Jose), este e o equivalente de "tentar outro AD": volte em
    *opcoes avancadas* e force FD-1, depois FD-2, depois FD-3, tentando criar
    a cada troca. Se a regiao tiver mais de um AD, varra os ADs tambem;
-2. tentar em horarios diferentes por alguns dias (madrugada costuma abrir);
+2. tentar em horarios diferentes por alguns dias. San Jose e UTC-7: a
+   madrugada de la e o meio da tarde aqui, entre 14h e 18h;
 3. mudar a conta para **Pay As You Go**. Os recursos Always Free continuam
    gratuitos, mas a fila de capacidade passa a ser prioritaria. E o que mais
    resolve — so tome cuidado para nao criar recurso pago sem querer.
