@@ -40,7 +40,7 @@ $nrconf{kernelhints} = 0;
 NR
 apt-get update -qq
 apt-get install -y -qq git curl ca-certificates jq ufw fail2ban unattended-upgrades \
-  chrony htop ncdu tzdata >/dev/null
+  chrony htop ncdu tzdata tmux >/dev/null
 
 # ------------------------------------------------------------------ 2. hora
 log "Fuso horario America/Sao_Paulo"

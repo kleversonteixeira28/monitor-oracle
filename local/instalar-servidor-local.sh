@@ -18,6 +18,27 @@ erro()  { printf '\n\033[1;31mERRO: %s\033[0m\n' "$*" >&2; exit 1; }
 [ "$(id -u)" = "0" ] || erro "rode com sudo"
 [ -d "$RAIZ/.git" ] || erro "clone o repositorio em $RAIZ primeiro (veja o cabecalho deste arquivo)"
 
+# ---------------------------------------------------------------- sobreviver
+# Esta instalacao baixa ~1,5 GB e leva de 10 a 20 minutos. Rodando presa a uma
+# sessao SSH, qualquer oscilacao de rede mata o processo no meio - com Docker
+# baixado pela metade e a stack sem subir. Dentro do tmux ela continua rodando
+# mesmo que a conexao caia, e voce volta para ela quando reconectar.
+if [ -n "${SSH_CONNECTION:-}" ] && [ -z "${TMUX:-}" ] && [ "${SEM_TMUX:-0}" != "1" ]; then
+  if ! command -v tmux >/dev/null 2>&1; then
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq tmux >/dev/null 2>&1 || true
+  fi
+  if command -v tmux >/dev/null 2>&1; then
+    aviso ""
+    aviso "  Voce esta por SSH. Vou rodar dentro de um tmux, para a instalacao"
+    aviso "  nao morrer se a conexao cair."
+    aviso ""
+    aviso "  Se cair: reconecte e volte com   tmux attach -t monitor"
+    aviso ""
+    sleep 3
+    exec tmux new-session -A -s monitor "bash '$0' $*; echo; echo '--- terminou. Enter para sair.'; read -r _"
+  fi
+fi
+
 # ------------------------------------------------------- como sera acessado
 echo
 cat <<'TXT'

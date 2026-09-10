@@ -223,6 +223,12 @@
 
 <div class="passo">
   <h2><span class="n">19</span> O endereço do git</h2>
+  <div class="critico">
+    Esta parte baixa 1,5 GB e leva de 10 a 20 minutos. Se a conexão SSH cair no
+    meio, o processo morre pela metade — por isso o script se protege sozinho
+    rodando dentro de um <code>tmux</code>. Se você for desconectado, reconecte
+    e volte com <code>tmux attach -t monitor</code>.
+  </div>
   <p>Estes três comandos, um de cada vez:</p>
   <pre><code>sudo apt update &amp;&amp; sudo apt install -y git</code></pre>
   <pre><code>sudo git clone https://github.com/kleversonteixeira28/monitor-oracle.git /opt/monitor</code></pre>
