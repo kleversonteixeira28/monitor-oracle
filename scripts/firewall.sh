@@ -20,7 +20,7 @@ set -a; . "$RAIZ/.env"; set +a
 # Universo de portas que este script controla. O que nao esta aqui ele nao toca.
 TODAS="22/tcp 80/tcp 443/tcp 443/udp 3000/tcp 8080/tcp 3001/tcp 9000/tcp"
 
-if [ "${MODO:-oracle}" = "tunel" ]; then
+if [ "${MODO:-oracle}" = "tunel" ] || [ "${MODO:-oracle}" = "tailscale" ]; then
   # O tunel faz conexao de SAIDA. Nao existe porta de entrada para abrir, e
   # abrir alguma so criaria superficie de ataque a toa. Fica so o SSH, para
   # voce administrar a maquina pela rede local.
@@ -38,7 +38,7 @@ if [ -f "$ESTADO/firewall" ] && [ "$(cat "$ESTADO/firewall")" = "$IMPRESSAO" ] \
   exit 0
 fi
 
-if [ ! -f "$ESTADO/firewall" ] && [ "${MODO:-oracle}" != "tunel" ]; then
+if [ ! -f "$ESTADO/firewall" ] && [ "${MODO:-oracle}" != "tunel" ] && [ "${MODO:-oracle}" != "tailscale" ]; then
   # ---- primeira vez numa maquina da Oracle: tira as regras dela do caminho --
   # Ordem importa: politica ACCEPT ANTES do flush, senao o flush derruba o SSH.
   iptables -P INPUT ACCEPT

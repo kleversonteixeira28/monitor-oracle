@@ -18,6 +18,44 @@ erro()  { printf '\n\033[1;31mERRO: %s\033[0m\n' "$*" >&2; exit 1; }
 [ "$(id -u)" = "0" ] || erro "rode com sudo"
 [ -d "$RAIZ/.git" ] || erro "clone o repositorio em $RAIZ primeiro (veja o cabecalho deste arquivo)"
 
+# ------------------------------------------------------- como sera acessado
+echo
+cat <<'TXT'
+  Como voce quer alcancar os paineis?
+
+    1) Tailscale  - rede privada sua. Sem dominio, sem DNS, nada exposto na
+                    internet. Funciona de qualquer lugar, mesmo com a maquina
+                    atras do roteador da loja. Quem for ver precisa entrar no
+                    seu tailnet. E o caminho mais curto.
+
+    2) Cloudflare - endereco publico (grafana.seu-dominio) que qualquer um
+       Tunnel       abre no navegador. Exige um dominio com os nameservers
+                    na Cloudflare.
+
+TXT
+printf "  1 ou 2 [1]: "
+read -r ESCOLHA
+[ -n "$ESCOLHA" ] || ESCOLHA=1
+
+definir() { # chave valor - troca se existir, acrescenta se nao
+  if grep -q "^$1=" "$RAIZ/.env"; then
+    sed -i "s|^$1=.*|$1=$2|" "$RAIZ/.env"
+  else
+    printf '%s=%s\n' "$1" "$2" >> "$RAIZ/.env"
+  fi
+}
+
+if [ "$ESCOLHA" = "1" ]; then
+  log "Preparando a maquina (isto leva alguns minutos)"
+  bash "$RAIZ/scripts/gerar-env.sh"
+  definir MODO tailscale
+  chmod 600 "$RAIZ/.env"
+  bash "$RAIZ/instalar.sh"
+  log "Agora o Tailscale"
+  bash "$RAIZ/local/tunel/instalar-tailscale.sh"
+  exit 0
+fi
+
 # ------------------------------------------------------------------ dominio
 DOMINIO="${DOMINIO:-}"
 if [ -z "$DOMINIO" ] && [ -f "$RAIZ/.env" ]; then
@@ -48,13 +86,6 @@ fi
 log "Marcando MODO=tunel no .env"
 bash "$RAIZ/scripts/gerar-env.sh"
 
-definir() { # chave valor
-  if grep -q "^$1=" "$RAIZ/.env"; then
-    sed -i "s|^$1=.*|$1=$2|" "$RAIZ/.env"
-  else
-    printf '%s=%s\n' "$1" "$2" >> "$RAIZ/.env"
-  fi
-}
 definir MODO tunel
 definir DOMINIO "$DOMINIO"
 chmod 600 "$RAIZ/.env"

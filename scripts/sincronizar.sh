@@ -35,12 +35,14 @@ set -a; . "$RAIZ/.env"; set +a
 
 # Escolhe o Caddyfile e as portas conforme o MODO.
 case "${MODO:-oracle}" in
-  tunel)
-    # Quem termina o HTTPS e a Cloudflare. O Caddy so roteia, em HTTP, e
-    # escuta apenas no 127.0.0.1 - o cloudflared roda na mesma maquina.
-    # Usar o Caddyfile.dominio aqui seria erro: ele tentaria tirar certificado
-    # e falharia para sempre, porque nao ha porta 80 aberta vinda de fora.
-    [ -n "${DOMINIO:-}" ] || { echo "MODO=tunel exige DOMINIO no .env"; exit 1; }
+  tunel|tailscale)
+    # Nos dois casos o Caddy so roteia, em HTTP, escutando apenas no 127.0.0.1.
+    # Quem publica para fora e o cloudflared ou o 'tailscale serve', na mesma
+    # maquina. Usar o Caddyfile.dominio aqui seria erro: ele tentaria tirar
+    # certificado e falharia para sempre, porque nao ha porta 80 vinda de fora.
+    if [ "$MODO" = "tunel" ] && [ -z "${DOMINIO:-}" ]; then
+      echo "MODO=tunel exige DOMINIO no .env"; exit 1
+    fi
     MODELO="caddy/Caddyfile.ip"
     ARQS="-f docker-compose.yml -f compose/tunel.yml"
     ;;

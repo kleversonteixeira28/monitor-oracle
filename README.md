@@ -7,6 +7,7 @@ A mesma stack roda em tres lugares, mudando uma linha do `.env`:
 |---|---|---|
 | Oracle Cloud Always Free | `oracle` | IP publico, HTTPS pelo Caddy |
 | Maquina sua (mini PC na loja) | `tunel` | Cloudflare Tunnel, sem abrir porta no roteador |
+| Maquina sua, so para voce | `tailscale` | rede privada Tailscale, sem dominio e sem DNS |
 | Seu PC, so para testar | — | `local/testar-local.sh`, em `localhost` |
 
 A ideia central: **o servidor nao guarda configuracao.** Ele clona este
@@ -163,7 +164,29 @@ O `cloudflared` faz conexao de SAIDA e o trafego volta por ela — nao ha o que
 alguem varrer, e o IP da loja nao aparece em lugar nenhum. O HTTPS fica por
 conta da Cloudflare, entao nao ha certificado para renovar aqui dentro.
 
-### Antes: a decisao do dominio
+### Tailscale, se os paineis sao so para voce
+
+O caminho mais curto: **sem dominio, sem DNS, sem nada exposto na internet**.
+O Tailscale monta uma rede propria por cima, entao nao importa se a maquina
+esta atras do roteador da loja, em outro predio ou em outra cidade.
+
+```bash
+sudo bash /opt/monitor/local/instalar-servidor-local.sh
+```
+
+Responda **1** na pergunta. Ele instala tudo, entra no seu tailnet (voce
+autoriza abrindo um endereco no celular) e publica os paineis com
+`tailscale serve` — os containers continuam so no `127.0.0.1`, entao nem a
+rede local da loja enxerga.
+
+Depois instale o Tailscale no seu PC e no celular, entre com a **mesma conta**,
+e os enderecos funcionam de qualquer lugar.
+
+**O limite honesto:** para alguem ver os paineis, essa pessoa precisa entrar no
+seu tailnet. Se um dia voce quiser mandar um link para um cliente abrir, ai o
+caminho e o Cloudflare Tunnel, abaixo.
+
+### Cloudflare Tunnel: antes, a decisao do dominio
 
 O tunel exige que o dominio esteja com os **nameservers na Cloudflare**. Nao
 basta ter conta — o dominio tem que estar la.

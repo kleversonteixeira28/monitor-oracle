@@ -34,6 +34,9 @@ done < "$MOLDE"
 set -a; . "$ENV"; set +a
 if [ "${MODO_LOCAL:-0}" = "1" ]; then
   URL="http://localhost:3000"
+elif [ "${MODO:-}" = "tailscale" ]; then
+  # Escrita pelo instalar-tailscale.sh; nao da para adivinhar o nome do tailnet.
+  URL="${TAILSCALE_URL:-http://localhost:3000}"
 elif [ -n "${DOMINIO:-}" ]; then
   URL="https://grafana.${DOMINIO}"
 else

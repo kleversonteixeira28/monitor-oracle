@@ -4,7 +4,10 @@ set -euo pipefail
 RAIZ="${RAIZ:-/opt/monitor}"
 set -a; . "$RAIZ/.env"; set +a
 
-if [ "${MODO_LOCAL:-0}" = "1" ]; then
+if [ "${MODO:-}" = "tailscale" ] && [ -n "${TAILSCALE_HOST:-}" ]; then
+  G="https://$TAILSCALE_HOST"; Z="https://$TAILSCALE_HOST:8443"
+  K="https://$TAILSCALE_HOST:8444"; P="https://$TAILSCALE_HOST:8445"
+elif [ "${MODO_LOCAL:-0}" = "1" ]; then
   G="http://localhost:3000"; Z="http://localhost:8080"
   K="http://localhost:3001"; P="http://localhost:9000"
 elif [ -n "${DOMINIO:-}" ]; then
