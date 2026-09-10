@@ -26,6 +26,18 @@ mkdir -p "$ESTADO"
 log "Instalando pacotes base"
 esperar_apt
 export DEBIAN_FRONTEND=noninteractive
+
+# O needrestart NAO obedece ao DEBIAN_FRONTEND: ele abre uma tela colorida
+# perguntando quais servicos reiniciar, e a instalacao fica parada esperando
+# alguem apertar Enter - inclusive num servidor sem ninguem na frente.
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
+install -d -m 0755 /etc/needrestart/conf.d
+cat > /etc/needrestart/conf.d/99-monitor.conf <<'NR'
+# Reinicia os servicos sozinho, sem perguntar.
+$nrconf{restart} = 'a';
+$nrconf{kernelhints} = 0;
+NR
 apt-get update -qq
 apt-get install -y -qq git curl ca-certificates jq ufw fail2ban unattended-upgrades \
   chrony htop ncdu tzdata >/dev/null
@@ -68,8 +80,9 @@ bash "$RAIZ/scripts/firewall.sh"
 
 # ----------------------------------------------------------------- 7. docker
 if ! command -v docker >/dev/null 2>&1; then
-  log "Instalando o Docker"
-  curl -fsSL https://get.docker.com | sh
+  log "Instalando o Docker (baixa ~120 MB)"
+  esperar_apt
+  NEEDRESTART_MODE=a DEBIAN_FRONTEND=noninteractive sh -c "$(curl -fsSL https://get.docker.com)"
 fi
 mkdir -p /etc/docker
 cat > /etc/docker/daemon.json <<'JSON'
