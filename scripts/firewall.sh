@@ -20,7 +20,12 @@ set -a; . "$RAIZ/.env"; set +a
 # Universo de portas que este script controla. O que nao esta aqui ele nao toca.
 TODAS="22/tcp 80/tcp 443/tcp 443/udp 3000/tcp 8080/tcp 3001/tcp 9000/tcp"
 
-if [ -n "${DOMINIO:-}" ]; then
+if [ "${MODO:-oracle}" = "tunel" ]; then
+  # O tunel faz conexao de SAIDA. Nao existe porta de entrada para abrir, e
+  # abrir alguma so criaria superficie de ataque a toa. Fica so o SSH, para
+  # voce administrar a maquina pela rede local.
+  QUERO="22/tcp"
+elif [ -n "${DOMINIO:-}" ]; then
   QUERO="22/tcp 80/tcp 443/tcp 443/udp"
 else
   QUERO="$TODAS"
@@ -33,8 +38,8 @@ if [ -f "$ESTADO/firewall" ] && [ "$(cat "$ESTADO/firewall")" = "$IMPRESSAO" ] \
   exit 0
 fi
 
-if [ ! -f "$ESTADO/firewall" ]; then
-  # ---- primeira vez: tira as regras da Oracle do caminho -------------------
+if [ ! -f "$ESTADO/firewall" ] && [ "${MODO:-oracle}" != "tunel" ]; then
+  # ---- primeira vez numa maquina da Oracle: tira as regras dela do caminho --
   # Ordem importa: politica ACCEPT ANTES do flush, senao o flush derruba o SSH.
   iptables -P INPUT ACCEPT
   iptables -P FORWARD ACCEPT
@@ -52,7 +57,10 @@ if [ ! -f "$ESTADO/firewall" ]; then
   for p in $QUERO; do ufw allow "$p" >/dev/null; done
   ufw --force enable >/dev/null
 else
-  # ---- depois: so converge, sem reset e sem tocar nas cadeias do Docker ----
+  # ---- depois (ou sempre, no MODO=tunel): so converge, sem reset e sem
+  # ---- tocar nas cadeias do Docker -----------------------------------------
+  ufw default deny incoming >/dev/null
+  ufw default allow outgoing >/dev/null
   for p in $TODAS; do
     if echo " $QUERO " | grep -q " $p "; then
       ufw allow "$p" >/dev/null

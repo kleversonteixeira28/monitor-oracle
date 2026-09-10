@@ -1,7 +1,13 @@
 # Monitoramento na Oracle Cloud (gratis)
 
-Servidor Ubuntu na camada **Always Free** da Oracle rodando Zabbix, Grafana,
-Prometheus, Uptime Kuma e Portainer em Docker.
+Zabbix, Grafana, Prometheus, Uptime Kuma e Portainer em Docker, num Ubuntu.
+A mesma stack roda em tres lugares, mudando uma linha do `.env`:
+
+| Onde | `MODO` | Como e acessado |
+|---|---|---|
+| Oracle Cloud Always Free | `oracle` | IP publico, HTTPS pelo Caddy |
+| Maquina sua (mini PC na loja) | `tunel` | Cloudflare Tunnel, sem abrir porta no roteador |
+| Seu PC, so para testar | — | `local/testar-local.sh`, em `localhost` |
 
 A ideia central: **o servidor nao guarda configuracao.** Ele clona este
 repositorio no primeiro boot, se instala sozinho, e depois puxa daqui de 5 em
@@ -148,6 +154,71 @@ EMAIL_TLS=kteixeira28@hotmail.com
 Em ate 5 minutos a sincronizacao troca o Caddyfile, o Caddy tira certificado
 sozinho e o firewall fecha as portas 3000/8080/3001/9000. Feche as mesmas
 portas na Security List da Oracle depois disso.
+
+## Numa maquina sua, publicada por Cloudflare Tunnel
+
+Serve para um mini PC ou PC velho na loja. Custo mensal: so a energia. E o
+tunel tem uma vantagem que nao e obvia: **nenhuma porta do roteador e aberta**.
+O `cloudflared` faz conexao de SAIDA e o trafego volta por ela — nao ha o que
+alguem varrer, e o IP da loja nao aparece em lugar nenhum. O HTTPS fica por
+conta da Cloudflare, entao nao ha certificado para renovar aqui dentro.
+
+### Antes: a decisao do dominio
+
+O tunel exige que o dominio esteja com os **nameservers na Cloudflare**. Nao
+basta ter conta — o dominio tem que estar la.
+
+Mover o `skfoods.com.br` significa **migrar o DNS de producao**. Se um registro
+se perder no caminho, a loja sai do ar. Isso e uma tarefa a parte, feita com
+calma, conferindo registro por registro antes de trocar os nameservers.
+
+Se voce nao quer mexer no dominio da loja agora, use **outro dominio so para
+infraestrutura**: um `.xyz` ou `.site` custa poucos reais por ano e nao tem
+nada de producao dependendo dele.
+
+> Se so **voce** precisa ver esses paineis, existe caminho sem dominio nenhum:
+> **Tailscale** poe a maquina numa rede privada sua e voce acessa por
+> `http://100.x.x.x:3000` do celular ou do PC. Zero DNS, zero exposicao. O
+> tunel ganha quando alguem de fora precisa abrir o link.
+
+### Instalacao
+
+Num Ubuntu Server 24.04 limpo:
+
+```bash
+sudo apt update && sudo apt install -y git
+```
+
+```bash
+sudo git clone https://github.com/kleversonteixeira28/monitor-oracle.git /opt/monitor
+```
+
+```bash
+sudo bash /opt/monitor/local/instalar-servidor-local.sh
+```
+
+Ele pergunta o dominio, marca `MODO=tunel` no `.env`, prepara a maquina
+(Docker, swap, fail2ban, ufw, timers) e no fim instala o tunel. A unica parte
+manual e autorizar na Cloudflare: aparece um endereco, voce abre no navegador
+de qualquer maquina e escolhe o dominio.
+
+No fim voce tem `grafana.SEU-DOMINIO`, `zabbix.`, `status.` e `docker.`, todos
+com HTTPS.
+
+### O que muda no `MODO=tunel`
+
+- o Caddy escuta **so em 127.0.0.1** — nem a rede local ve as portas
+- o Caddy **nao** tenta certificado: quem termina o HTTPS e a Cloudflare
+- o `ufw` libera **so o SSH**, para voce administrar pela rede local
+- a sincronizacao com o GitHub continua igual: `git push` e em 5 min a maquina
+  mudou
+
+### Um limite honesto
+
+Qualquer um na internet que souber o endereco chega na **tela de login**. As
+senhas geradas sao fortes, mas a porta esta la. Para fechar de vez, o
+**Cloudflare Access** (gratis ate 50 usuarios) exige autenticacao *antes* de
+chegar no servidor — configura no painel da Cloudflare, em Zero Trust.
 
 ## Testar na sua propria maquina (sem nuvem nenhuma)
 

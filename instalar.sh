@@ -49,7 +49,9 @@ fi
 
 # ------------------------------------------------------------------- 4. repo
 if [ ! -d "$RAIZ/.git" ]; then
-  erro "$RAIZ nao e um clone do repositorio. O cloud-init deveria ter clonado."
+  erro "$RAIZ nao e um clone do repositorio.
+  Na Oracle, quem clona e o cloud-init. Numa maquina sua, clone antes:
+    sudo git clone https://github.com/kleversonteixeira28/monitor-oracle.git $RAIZ"
 fi
 cd "$RAIZ"
 git config --global --add safe.directory "$RAIZ"
@@ -79,15 +81,31 @@ cat > /etc/docker/daemon.json <<'JSON'
 JSON
 systemctl enable --now docker >/dev/null 2>&1 || true
 systemctl restart docker
-id -nG ubuntu 2>/dev/null | grep -qw docker || usermod -aG docker ubuntu 2>/dev/null || true
+# Na Oracle o usuario e "ubuntu"; num mini PC e o seu. SUDO_USER diz quem
+# chamou o sudo.
+USUARIO="${SUDO_USER:-ubuntu}"
+id -nG "$USUARIO" 2>/dev/null | grep -qw docker || usermod -aG docker "$USUARIO" 2>/dev/null || true
 
 # ----------------------------------------------------------------- 8. ssh/f2b
 log "Endurecendo SSH e ligando o fail2ban"
-cat > /etc/ssh/sshd_config.d/99-monitor.conf <<'SSH'
+# Desligar a senha SEM ter chave instalada tranca voce para fora da maquina -
+# e na Oracle nao ha teclado para consertar. So endurece se houver chave.
+CHAVES="$(getent passwd "$USUARIO" | cut -d: -f6)/.ssh/authorized_keys"
+if [ -s "$CHAVES" ]; then
+  cat > /etc/ssh/sshd_config.d/99-monitor.conf <<'SSH'
 PasswordAuthentication no
 PermitRootLogin no
 X11Forwarding no
 SSH
+  echo "    login por senha desligado ($USUARIO tem chave)"
+else
+  cat > /etc/ssh/sshd_config.d/99-monitor.conf <<'SSH'
+PermitRootLogin no
+X11Forwarding no
+SSH
+  echo "    ATENCAO: $USUARIO nao tem chave SSH, entao MANTIVE o login por senha."
+  echo "    Instale sua chave (ssh-copy-id) e rode este script de novo."
+fi
 systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || true
 
 cat > /etc/fail2ban/jail.d/monitor.conf <<'F2B'

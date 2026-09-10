@@ -1,0 +1,16 @@
+# Usado no MODO=tunel (maquina na sua rede, publicada pelo Cloudflare Tunnel).
+#
+# O "!override" substitui a lista de portas do docker-compose.yml em vez de
+# somar a ela - sem isso, o Compose CONCATENA e as portas 80/443 continuariam
+# publicadas para a rede toda, que e exatamente o que o tunel existe para
+# evitar. (Precisa de Docker Compose 2.24 ou mais novo.)
+#
+# Tudo em 127.0.0.1: o cloudflared roda na mesma maquina e alcanca pelo
+# loopback. Ninguem na rede local, nem no roteador, ve estas portas.
+services:
+  caddy:
+    ports: !override
+      - "127.0.0.1:3000:3000"   # Grafana
+      - "127.0.0.1:8080:8080"   # Zabbix
+      - "127.0.0.1:3001:3001"   # Uptime Kuma
+      - "127.0.0.1:9000:9000"   # Portainer

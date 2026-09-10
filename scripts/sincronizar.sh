@@ -33,14 +33,27 @@ fi
 bash "$RAIZ/scripts/gerar-env.sh"
 set -a; . "$RAIZ/.env"; set +a
 
-# Escolhe o Caddyfile conforme ter ou nao dominio.
-if [ -n "${DOMINIO:-}" ]; then
-  MODELO="caddy/Caddyfile.dominio"
-  ARQS="-f docker-compose.yml"
-else
-  MODELO="caddy/Caddyfile.ip"
-  ARQS="-f docker-compose.yml -f compose/portas-ip.yml"
-fi
+# Escolhe o Caddyfile e as portas conforme o MODO.
+case "${MODO:-oracle}" in
+  tunel)
+    # Quem termina o HTTPS e a Cloudflare. O Caddy so roteia, em HTTP, e
+    # escuta apenas no 127.0.0.1 - o cloudflared roda na mesma maquina.
+    # Usar o Caddyfile.dominio aqui seria erro: ele tentaria tirar certificado
+    # e falharia para sempre, porque nao ha porta 80 aberta vinda de fora.
+    [ -n "${DOMINIO:-}" ] || { echo "MODO=tunel exige DOMINIO no .env"; exit 1; }
+    MODELO="caddy/Caddyfile.ip"
+    ARQS="-f docker-compose.yml -f compose/tunel.yml"
+    ;;
+  *)
+    if [ -n "${DOMINIO:-}" ]; then
+      MODELO="caddy/Caddyfile.dominio"
+      ARQS="-f docker-compose.yml"
+    else
+      MODELO="caddy/Caddyfile.ip"
+      ARQS="-f docker-compose.yml -f compose/portas-ip.yml"
+    fi
+    ;;
+esac
 if ! cmp -s "$MODELO" caddy/Caddyfile 2>/dev/null; then
   cp "$MODELO" caddy/Caddyfile
   echo "==> Caddyfile trocado para $(basename "$MODELO")"
