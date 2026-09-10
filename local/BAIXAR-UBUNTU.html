@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baixar Ubuntu — servidor de monitoramento</title>
+<style>
+  :root{
+    --fundo:#f7f7f5; --caixa:#fff; --texto:#1c1c1a; --fraco:#6b6b66;
+    --linha:#e2e2dd; --realce:#c2410c; --realce-fraco:#fff3ec; --codigo:#f0f0ec;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --fundo:#16161a; --caixa:#1e1e23; --texto:#e8e8e4; --fraco:#9a9a94;
+      --linha:#32323a; --realce:#fb923c; --realce-fraco:#2a1d15; --codigo:#26262c;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:32px 20px 64px;
+    background:var(--fundo); color:var(--texto);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  main{max-width:760px; margin:0 auto}
+  h1{font-size:26px; line-height:1.25; margin:0 0 6px}
+  .sub{color:var(--fraco); margin:0 0 32px}
+  h2{font-size:18px; margin:36px 0 12px; padding-top:20px; border-top:1px solid var(--linha)}
+  h2:first-of-type{border-top:0; padding-top:0}
+  .baixar{
+    display:block; background:var(--caixa); border:1px solid var(--linha);
+    border-left:4px solid var(--realce); border-radius:10px;
+    padding:18px 20px; margin:0 0 14px; text-decoration:none; color:inherit;
+  }
+  .baixar:hover{background:var(--realce-fraco)}
+  .baixar .nome{font-size:17px; font-weight:650; color:var(--realce)}
+  .baixar .arq{font-family:ui-monospace,Consolas,monospace; font-size:13px; color:var(--fraco); margin-top:4px; word-break:break-all}
+  .baixar .obs{font-size:14px; color:var(--fraco); margin-top:8px}
+  .secundario{border-left-color:var(--linha)}
+  .secundario .nome{color:var(--texto)}
+  code{background:var(--codigo); padding:2px 6px; border-radius:4px;
+       font-family:ui-monospace,Consolas,monospace; font-size:13.5px; word-break:break-all}
+  pre{background:var(--codigo); padding:14px 16px; border-radius:8px; overflow-x:auto; margin:10px 0}
+  pre code{background:none; padding:0; font-size:13px}
+  ul{padding-left:22px} li{margin:7px 0}
+  .marcar li{list-style:none; position:relative; padding-left:26px}
+  .marcar li::before{content:"☐"; position:absolute; left:0; font-size:17px; color:var(--realce)}
+  .aviso{background:var(--realce-fraco); border:1px solid var(--realce);
+         border-radius:8px; padding:14px 16px; margin:16px 0; font-size:15px}
+  .hash{font-family:ui-monospace,Consolas,monospace; font-size:11.5px;
+        color:var(--fraco); word-break:break-all; line-height:1.5}
+  footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--linha);
+         color:var(--fraco); font-size:13.5px}
+  a{color:var(--realce)}
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Baixar o Ubuntu para o servidor de monitoramento</h1>
+  <p class="sub">Links conferidos em 10/09/2026 direto do <code>releases.ubuntu.com</code>.</p>
+
+  <h2>Baixe este</h2>
+
+  <a class="baixar" href="https://releases.ubuntu.com/26.04.1/ubuntu-26.04.1-live-server-amd64.iso">
+    <div class="nome">Ubuntu Server 26.04.1 LTS &nbsp;·&nbsp; 2,7 GB</div>
+    <div class="arq">ubuntu-26.04.1-live-server-amd64.iso</div>
+    <div class="obs">
+      Para qualquer PC ou mini PC comum (Intel/AMD). Suporte de segurança até 2036.
+      Confirmei que o Docker publica repositório para esta versão — era o risco
+      de pegar uma versão nova demais.
+    </div>
+  </a>
+
+  <div class="aviso">
+    <strong>Server, não Desktop.</strong> A versão Desktop tem 6 GB e carrega
+    interface gráfica que só consome memória numa máquina que vai ficar num
+    canto. Nada do que a gente instalou precisa de tela.
+  </div>
+
+  <h2>Se der problema de hardware</h2>
+
+  <a class="baixar secundario" href="https://releases.ubuntu.com/24.04.4/ubuntu-24.04.4-live-server-amd64.iso">
+    <div class="nome">Ubuntu Server 24.04.4 LTS &nbsp;·&nbsp; 3,2 GB</div>
+    <div class="arq">ubuntu-24.04.4-live-server-amd64.iso</div>
+    <div class="obs">
+      A LTS anterior, mais rodada. Use se a 26.04 travar no boot ou não
+      reconhecer a rede da máquina — coisa que acontece mais com hardware
+      muito antigo do que com hardware novo.
+    </div>
+  </a>
+
+  <h2>Conferir o download (opcional, 30 segundos)</h2>
+  <p>No PowerShell, na pasta onde baixou:</p>
+  <pre><code>certutil -hashfile ubuntu-26.04.1-live-server-amd64.iso SHA256</code></pre>
+  <p>Tem que bater com:</p>
+  <p class="hash">cc8a95cde20f6ced61a322420de00f10cc3c90ced545daa46cb9c1a117f1d927</p>
+  <p style="font-size:14.5px;color:var(--fraco)">
+    Se não bater, o download veio corrompido — baixe de novo. Vale a pena:
+    ISO quebrada dá erro no meio da instalação, e aí você não sabe se o problema
+    é o pen drive, a máquina ou o arquivo.
+  </p>
+
+  <h2>Gravar o pen drive</h2>
+  <p>
+    <a href="https://rufus.ie">Rufus</a> (Windows, gratuito, não precisa instalar).
+    Escolha o pen drive, escolha a ISO, deixe todo o resto no padrão e mande gravar.
+    O pen drive é apagado — use um vazio, de 4 GB ou mais.
+  </p>
+
+  <h2>Na hora de instalar — o que marcar</h2>
+  <ul class="marcar">
+    <li><strong>Install OpenSSH server</strong> — esta é a que importa. Sem ela
+        você não entra na máquina pela rede e vai ter que ligar teclado e monitor
+        toda vez.</li>
+    <li>Idioma e teclado: <strong>Português (Brasil)</strong>.</li>
+    <li>Tipo de instalação: <strong>Ubuntu Server</strong>, não a "minimized".
+        A minimizada tira ferramentas que os scripts usam.</li>
+    <li>Disco: usar o disco inteiro, com o padrão que ele sugerir.</li>
+    <li><strong>Não marque nenhum snap</strong> na tela de "Featured server snaps".
+        Docker por snap conflita com o que a gente instala.</li>
+    <li>Guarde o usuário e a senha que você criar — é com eles que você entra.</li>
+  </ul>
+
+  <h2>Depois que instalar</h2>
+  <p>Ligue a máquina na rede por cabo, descubra o IP dela com <code>ip a</code>,
+     e do seu PC entre com <code>ssh usuario@IP</code>. Daí:</p>
+  <pre><code>sudo apt update &amp;&amp; sudo apt install -y git
+
+sudo git clone https://github.com/kleversonteixeira28/monitor-oracle.git /opt/monitor
+
+sudo bash /opt/monitor/local/instalar-servidor-local.sh</code></pre>
+  <p style="font-size:14.5px;color:var(--fraco)">
+    Ele pergunta o domínio, prepara a máquina inteira e instala o túnel da
+    Cloudflare no fim.
+  </p>
+
+  <footer>
+    Se a máquina for um Raspberry Pi, o arquivo é outro (imagem ARM, não esta ISO) —
+    me avise antes de baixar.
+  </footer>
+
+</main>
+</body>
+</html>

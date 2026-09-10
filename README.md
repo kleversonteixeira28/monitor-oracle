@@ -183,7 +183,9 @@ nada de producao dependendo dele.
 
 ### Instalacao
 
-Num Ubuntu Server 24.04 limpo:
+Num **Ubuntu Server 26.04 LTS** limpo (a 24.04 tambem serve). O link do
+download e o passo a passo do pen drive estao em `local/BAIXAR-UBUNTU.html` —
+abra com dois cliques:
 
 ```bash
 sudo apt update && sudo apt install -y git
