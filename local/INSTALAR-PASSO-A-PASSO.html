@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instalar o Ubuntu — passo a passo</title>
+<style>
+  :root{
+    --fundo:#f7f7f5; --caixa:#fff; --texto:#1c1c1a; --fraco:#6b6b66;
+    --linha:#e2e2dd; --realce:#c2410c; --realce-fraco:#fff3ec; --codigo:#f0f0ec;
+    --ok:#15803d; --ok-fraco:#eefaf1;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --fundo:#16161a; --caixa:#1e1e23; --texto:#e8e8e4; --fraco:#9a9a94;
+      --linha:#32323a; --realce:#fb923c; --realce-fraco:#2a1d15; --codigo:#26262c;
+      --ok:#4ade80; --ok-fraco:#14261a;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0; padding:28px 18px 72px; background:var(--fundo); color:var(--texto);
+       font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  main{max-width:720px; margin:0 auto}
+  h1{font-size:25px; line-height:1.25; margin:0 0 6px}
+  .sub{color:var(--fraco); margin:0 0 28px}
+  .passo{background:var(--caixa); border:1px solid var(--linha); border-radius:10px;
+         padding:16px 18px; margin:0 0 12px}
+  .passo h2{font-size:17px; margin:0 0 8px; display:flex; align-items:baseline; gap:10px}
+  .n{display:inline-flex; align-items:center; justify-content:center; flex:none;
+     width:26px; height:26px; border-radius:50%; background:var(--realce); color:#fff;
+     font-size:13px; font-weight:700}
+  .passo p{margin:8px 0}
+  .passo p:last-child{margin-bottom:0}
+  .resposta{color:var(--ok); font-weight:600}
+  .critico{background:var(--realce-fraco); border-left:4px solid var(--realce);
+           border-radius:6px; padding:12px 14px; margin:12px 0; font-size:15px}
+  .nota{color:var(--fraco); font-size:14.5px}
+  code{background:var(--codigo); padding:2px 6px; border-radius:4px;
+       font-family:ui-monospace,Consolas,monospace; font-size:13.5px; word-break:break-all}
+  pre{background:var(--codigo); padding:13px 15px; border-radius:8px; overflow-x:auto; margin:10px 0}
+  pre code{background:none; padding:0; font-size:12.5px; line-height:1.7}
+  h3{font-size:18px; margin:34px 0 12px; padding-top:22px; border-top:1px solid var(--linha)}
+  ul{padding-left:20px; margin:8px 0} li{margin:6px 0}
+  .fim{background:var(--ok-fraco); border:1px solid var(--ok); border-radius:10px;
+       padding:16px 18px; margin:20px 0}
+  a{color:var(--realce)}
+</style>
+</head>
+<body>
+<main>
+
+<h1>Instalar o Ubuntu Server no mini PC</h1>
+<p class="sub">Da tela preta até o servidor se configurando sozinho. Uns 20 minutos.</p>
+
+<div class="critico">
+  <strong>Antes de ligar:</strong> conecte a máquina na rede <strong>por cabo</strong>.
+  O instalador de servidor até faz Wi-Fi, mas é chato de configurar no teclado e
+  costuma ser a causa de metade dos problemas. Cabo resolve.
+</div>
+
+<h3>Dar boot pelo pen drive</h3>
+
+<div class="passo">
+  <h2><span class="n">1</span> Entrar no menu de boot</h2>
+  <p>Espete o pen drive, ligue a máquina e vá batendo na tecla do menu de boot
+     assim que aparecer a logo:</p>
+  <p><code>F12</code> na Dell e na Lenovo · <code>F9</code> na HP ·
+     <code>F11</code> em placas ASRock/MSI · <code>F8</code> ou <code>Del</code>
+     em genéricas</p>
+  <p class="nota">Escolha a linha que tem o nome do pen drive. Se aparecer duas
+     vezes, prefira a que começa com <strong>UEFI</strong>.</p>
+  <p class="nota">Se não aparecer nada: entre na BIOS (<code>Del</code> ou
+     <code>F2</code>) e desligue o <strong>Secure Boot</strong>.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">2</span> Menu do GRUB</h2>
+  <p>Aparece uma tela preta com opções. Escolha
+     <span class="resposta">Try or Install Ubuntu Server</span> e Enter.
+     Passam várias linhas de texto — é normal, espere.</p>
+</div>
+
+<h3>O instalador</h3>
+<p class="nota">Ele é todo por teclado: setas para mover, Enter para escolher,
+   Tab para pular para o botão <em>Done</em>.</p>
+
+<div class="passo">
+  <h2><span class="n">3</span> Idioma</h2>
+  <p><span class="resposta">English</span>.</p>
+  <p class="nota">Vai contra o instinto, mas mensagem de erro em inglês você
+     acha na internet; traduzida, não acha. E é a única tela do sistema que
+     você vai ver — depois é tudo por SSH.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">4</span> Atualização do instalador</h2>
+  <p>Se perguntar, <span class="resposta">Continue without updating</span>.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">5</span> Teclado</h2>
+  <p>Layout: <span class="resposta">Portuguese (Brazil)</span>.</p>
+  <p>Variante: <span class="resposta">Portuguese (Brazil)</span> para teclado
+     ABNT2 (o que tem a tecla <strong>ç</strong>), ou
+     <strong>Portuguese (Brazil, US keyboard with alt-gr dead keys)</strong>
+     se o teclado for americano.</p>
+  <p class="nota">Teste o ç e o hífen no campo de baixo antes de seguir. Errar
+     aqui só aparece na hora de digitar a senha.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">6</span> Tipo de instalação</h2>
+  <p><span class="resposta">Ubuntu Server</span> — a primeira opção.</p>
+  <div class="critico">
+    <strong>Não escolha "Ubuntu Server (minimized)".</strong> Ela tira
+    ferramentas que os scripts usam, e você só descobre quando algo falha
+    sem explicação.
+  </div>
+  <p class="nota">"Search for third-party drivers": deixe desmarcado.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">7</span> Rede</h2>
+  <p>Ele pega IP sozinho. <strong>Anote o número que aparecer</strong> ao lado
+     da placa de rede — algo como <code>192.168.0.157/24</code>. É por ele que
+     você vai entrar do seu PC.</p>
+  <p class="nota">Se ficar em branco ou dizer <em>not connected</em>, o cabo não
+     está passando. Resolva antes de seguir.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">8</span> Proxy</h2>
+  <p>Deixe <span class="resposta">vazio</span>. Done.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">9</span> Espelho de download</h2>
+  <p>Deixe o que ele sugerir (costuma ser <code>br.archive.ubuntu.com</code>).
+     Espere ele terminar de testar e Done.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">10</span> Disco</h2>
+  <p><span class="resposta">Use an entire disk</span>.</p>
+  <p>Deixe <strong>Set up this disk as an LVM group</strong> marcado.
+     <strong>Não</strong> marque a criptografia (LUKS) — com ela a máquina pede
+     senha no teclado a cada reinício, e um servidor que reinicia sozinho depois
+     de uma queda de luz não pode depender de alguém estar lá.</p>
+  <p class="nota">Se houver mais de um disco, escolha o SSD.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">11</span> Confirmar que vai apagar</h2>
+  <p>Revise e Done. Ele avisa <em>"destructive action"</em> —
+     <span class="resposta">Continue</span>.</p>
+  <div class="critico">Daqui em diante o disco é apagado. Se tiver algo na
+     máquina, é agora ou nunca.</div>
+</div>
+
+<div class="passo">
+  <h2><span class="n">12</span> Seu usuário</h2>
+  <ul>
+    <li><strong>Your name:</strong> Kleverson</li>
+    <li><strong>Your server's name:</strong> <code>monitor</code>
+        <span class="nota">(é o nome da máquina na rede)</span></li>
+    <li><strong>Pick a username:</strong> <code>kleverson</code>
+        <span class="nota">— minúsculas, sem acento, sem espaço</span></li>
+    <li><strong>Senha:</strong> escolha e <strong>anote agora</strong></li>
+  </ul>
+  <p class="nota">O teclado não mostra o que você digita na senha. Se o layout
+     estiver errado, você só descobre no primeiro login — por isso o teste do
+     passo 5.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">13</span> Ubuntu Pro</h2>
+  <p><span class="resposta">Skip for now</span>.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">14</span> SSH — a tela que mais importa</h2>
+  <div class="critico">
+    Marque <strong>Install OpenSSH server</strong> (barra de espaço).
+    <br><br>
+    Sem isso você não entra na máquina pela rede, e vai depender de teclado e
+    monitor pendurados nela para sempre. Todo o resto do trabalho é por SSH.
+  </div>
+  <p class="nota">"Import SSH identity": deixe em <em>No</em>. A gente instala a
+     chave depois, com calma.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">15</span> Snaps</h2>
+  <p>Tela "Featured server snaps": <strong>não marque nada</strong>. Done.</p>
+  <p class="nota">Docker por snap conflita com o que os scripts instalam.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">16</span> Esperar e reiniciar</h2>
+  <p>Ele instala e baixa atualizações — de 5 a 15 minutos, conforme a internet.
+     Quando aparecer <span class="resposta">Reboot Now</span>, escolha.</p>
+  <p>Ele pede para tirar o pen drive e apertar Enter. Tire e aperte.</p>
+</div>
+
+<h3>Primeiro login e o resto</h3>
+
+<div class="passo">
+  <h2><span class="n">17</span> Descobrir o IP</h2>
+  <p>Na máquina, entre com o usuário e a senha que você criou, e rode:</p>
+  <pre><code>ip -4 addr show scope global | grep inet</code></pre>
+  <p>Anote o número, tipo <code>192.168.0.157</code>.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">18</span> Entrar do seu PC</h2>
+  <p>No PowerShell do seu Windows (troque o IP e o usuário):</p>
+  <pre><code>ssh kleverson@192.168.0.157</code></pre>
+  <p>Na primeira vez ele pergunta se confia na máquina —
+     responda <span class="resposta">yes</span>. Depois pede a senha.</p>
+  <p class="nota">A partir daqui você pode desligar o monitor e o teclado do
+     mini PC. Tudo é daqui.</p>
+</div>
+
+<div class="passo">
+  <h2><span class="n">19</span> O endereço do git</h2>
+  <p>Estes três comandos, um de cada vez:</p>
+  <pre><code>sudo apt update &amp;&amp; sudo apt install -y git</code></pre>
+  <pre><code>sudo git clone https://github.com/kleversonteixeira28/monitor-oracle.git /opt/monitor</code></pre>
+  <pre><code>sudo bash /opt/monitor/local/instalar-servidor-local.sh</code></pre>
+  <p>O primeiro <code>sudo</code> pede a sua senha de novo.</p>
+</div>
+
+<div class="fim">
+  <strong>A partir daqui ele se vira sozinho.</strong>
+  <p>Ele pergunta o domínio, marca o modo túnel, instala Docker, swap, firewall,
+     fail2ban, os temporizadores e sobe a stack toda. Leva de 10 a 20 minutos —
+     baixa cerca de 1,5 GB de imagens.</p>
+  <p>A única parada é a autorização da Cloudflare: aparece um endereço, você
+     abre no navegador de qualquer máquina e escolhe o domínio.</p>
+  <p style="margin-bottom:0">No fim, para ver os endereços e as senhas:
+     <code>sudo bash /opt/monitor/scripts/senhas.sh</code></p>
+</div>
+
+<h3>Se der errado</h3>
+<ul>
+  <li><strong>Esqueceu de marcar o OpenSSH:</strong> não precisa reinstalar.
+      No teclado da máquina: <code>sudo apt install -y openssh-server</code>.</li>
+  <li><strong>O SSH recusa a senha:</strong> quase sempre é layout de teclado.
+      Digite a senha num campo de usuário, onde ela aparece, para conferir.</li>
+  <li><strong>Não sabe o IP e não tem monitor:</strong> entre no roteador e
+      procure na lista de aparelhos por <code>monitor</code>.</li>
+</ul>
+
+<h3>Uma coisa da BIOS que vale voltar para fazer</h3>
+<p>Procure <strong>Restore on AC Power Loss</strong> (às vezes
+   <em>AC Back / After Power Failure</em>) e ponha em <strong>Power On</strong>.
+   Assim, quando faltar luz na loja, a máquina volta sozinha quando a energia
+   voltar. Sem isso, ela fica desligada até alguém apertar o botão — e um
+   monitoramento que não volta sozinho não serve para muita coisa.</p>
+
+</main>
+</body>
+</html>
